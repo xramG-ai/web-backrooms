@@ -45,6 +45,8 @@ export default function App() {
   uiRef.current = ui
   const intent = useRef<'inventory' | null>(null)
 
+  const [manual, setManual] = useState(false)
+
   // 설정 값
   const [sens, setSens] = useState(1)
   const [dof, setDof] = useState(true)
@@ -166,12 +168,50 @@ export default function App() {
       )}
 
       {ui === 'start' && (
-        <div className="overlay" onClick={enter}>
-          <div className="title">WEB BACKROOMS</div>
-          <div className="hint">클릭하여 진입</div>
-          <div className="keys">
-            WASD 이동 · SHIFT 달리기 · SPACE 점프 · CTRL/C 앉기 · TAB 소지품 · ESC 설정
+        <div className="start">
+          <div className="plate">
+            <div className="rivet tl" />
+            <div className="rivet tr" />
+            <div className="rivet bl" />
+            <div className="rivet br" />
+            <div className="plate-title">WEB BACKROOMS</div>
+            <div className="cryptex">
+              <div className="cryptex-band">
+                NOCLIP&nbsp;·&nbsp;LEVEL&nbsp;0&nbsp;·&nbsp;NOCLIP&nbsp;·&nbsp;LEVEL&nbsp;0&nbsp;·&nbsp;NOCLIP&nbsp;·&nbsp;LEVEL&nbsp;0&nbsp;·&nbsp;NOCLIP&nbsp;·&nbsp;LEVEL&nbsp;0&nbsp;·&nbsp;
+              </div>
+            </div>
+            <div className="plate-buttons">
+              <button className="mbtn" onClick={enter}>게임 시작</button>
+              <button className="mbtn" onClick={() => setManual(true)}>설명서</button>
+            </div>
+            <div className="plate-serial">SPEC. 100 × 100 × 100</div>
           </div>
+
+          {manual && (
+            <div className="manual-backdrop" onClick={() => setManual(false)}>
+              <div className="plate manual" onClick={e => e.stopPropagation()}>
+                <div className="rivet tl" />
+                <div className="rivet tr" />
+                <div className="rivet bl" />
+                <div className="rivet br" />
+                <div className="plate-title small">설명서</div>
+                <div className="man-rows">
+                  <div className="man-row"><span>이동</span><span className="cap">W A S D</span></div>
+                  <div className="man-row"><span>달리기</span><span className="cap">SHIFT</span></div>
+                  <div className="man-row"><span>점프</span><span className="cap">SPACE</span></div>
+                  <div className="man-row"><span>앉기</span><span className="cap">CTRL / C</span></div>
+                  <div className="man-row"><span>소지품</span><span className="cap">TAB</span></div>
+                  <div className="man-row"><span>설정</span><span className="cap">ESC</span></div>
+                </div>
+                <div className="man-note">
+                  게임은 전체화면으로 실행된다.<br />
+                  이 공간의 규칙은 문서화되어 있지 않다.<br />
+                  걸어라. 기억하려 하지 마라.
+                </div>
+                <button className="mbtn" onClick={() => setManual(false)}>닫기</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </>
