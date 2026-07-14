@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 import { game } from '../game/state'
 import { CHUNK, LOAD_RADIUS, UNLOAD_RADIUS } from '../game/config'
 import { ChunkMesh } from './ChunkMesh'
@@ -22,8 +23,13 @@ function computeList(cx: number, cz: number): string[] {
  */
 export function World() {
   const [list, setList] = useState<string[]>(() => computeList(0, 0))
+  const groupRef = useRef<THREE.Group>(null)
 
   useFrame(() => {
+    // 플로팅 오리진: 월드 전체를 -origin 만큼 이동시켜 렌더 좌표를 작게 유지
+    if (groupRef.current) {
+      groupRef.current.position.set(-game.origin.x, 0, -game.origin.z)
+    }
     const cx = Math.floor(game.pos.x / CHUNK)
     const cz = Math.floor(game.pos.z / CHUNK)
     setList(prev => {
@@ -45,11 +51,11 @@ export function World() {
   })
 
   return (
-    <>
+    <group ref={groupRef}>
       {list.map(k => {
         const [cx, cz] = k.split(',').map(Number)
         return <ChunkMesh key={k} cx={cx} cz={cz} />
       })}
-    </>
+    </group>
   )
 }

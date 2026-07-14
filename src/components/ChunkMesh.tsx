@@ -34,32 +34,36 @@ function scaleWallUVs(g: THREE.BoxGeometry, sx: number, sy: number, sz: number) 
 
 export function ChunkMesh({ cx, cz }: { cx: number; cz: number }) {
   const data = useMemo(() => getChunk(cx, cz), [cx, cz])
+  const ox = cx * CHUNK
+  const oz = cz * CHUNK
 
+  // 지오메트리는 청크 로컬 좌표로 베이크 — 플로팅 오리진과 결합해
+  // GPU에는 항상 작은 좌표만 올라간다 (float32 정밀도 유지)
   const wallGeo = useMemo(() => {
     if (data.walls.length === 0) return null
     const gs = data.walls.map(w => {
       const g = new THREE.BoxGeometry(w.sx, w.sy, w.sz)
       scaleWallUVs(g, w.sx, w.sy, w.sz)
-      g.translate(w.x, w.sy / 2, w.z)
+      g.translate(w.x - ox, w.sy / 2, w.z - oz)
       return g
     })
     const merged = mergeGeometries(gs)
     gs.forEach(g => g.dispose())
     return merged
-  }, [data])
+  }, [data, ox, oz])
 
   const litGeo = useMemo(() => {
     if (data.lights.length === 0) return null
     const gs = data.lights.map(l => {
       // 원형 매립 조명
       const g = new THREE.CylinderGeometry(0.45, 0.45, 0.06, 20)
-      g.translate(l.x, WALL_H - 0.03, l.z)
+      g.translate(l.x - ox, WALL_H - 0.03, l.z - oz)
       return g
     })
     const merged = mergeGeometries(gs)
     gs.forEach(g => g.dispose())
     return merged
-  }, [data])
+  }, [data, ox, oz])
 
   // 언마운트 시 병합 지오메트리 해제
   useEffect(() => () => {
@@ -67,13 +71,10 @@ export function ChunkMesh({ cx, cz }: { cx: number; cz: number }) {
     litGeo?.dispose()
   }, [wallGeo, litGeo])
 
-  const mx = cx * CHUNK + CHUNK / 2
-  const mz = cz * CHUNK + CHUNK / 2
-
   return (
-    <group>
-      <mesh geometry={floorGeo} material={mats.floor} position={[mx, 0, mz]} />
-      <mesh geometry={ceilGeo} material={mats.ceil} position={[mx, WALL_H, mz]} />
+    <group position={[ox, 0, oz]}>
+      <mesh geometry={floorGeo} material={mats.floor} position={[CHUNK / 2, 0, CHUNK / 2]} />
+      <mesh geometry={ceilGeo} material={mats.ceil} position={[CHUNK / 2, WALL_H, CHUNK / 2]} />
       {wallGeo && <mesh geometry={wallGeo} material={mats.wall} />}
       {litGeo && <mesh geometry={litGeo} material={mats.lightOn} />}
     </group>

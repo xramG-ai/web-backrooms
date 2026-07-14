@@ -6,6 +6,7 @@ import { gatherBoxes, moveXZ } from '../game/collision'
 import { footstep } from '../game/audio'
 import {
   EYE, CROUCH_EYE, PLAYER_R, WALK, RUN, CROUCH_SPEED, JUMP, GRAV, WALL_H,
+  REBASE_DIST, CHUNK,
 } from '../game/config'
 
 const SENS = 0.0022
@@ -122,10 +123,20 @@ export function Player() {
     )
     game.pos.set(nx, ny, nz)
 
+    // ── 플로팅 오리진 리베이스 ──
+    // 렌더 기준점에서 너무 멀어지면 기준점을 플레이어 근처 청크 경계로 이동.
+    // 카메라와 월드가 같은 프레임에 같은 양만큼 이동하므로 화면상 이음새가 없다.
+    if (Math.abs(nx - game.origin.x) > REBASE_DIST ||
+        Math.abs(nz - game.origin.z) > REBASE_DIST) {
+      game.origin.x = Math.floor(nx / CHUNK) * CHUNK
+      game.origin.z = Math.floor(nz / CHUNK) * CHUNK
+    }
+
     // ── 헤드밥 + 발소리 ──
     const hSpeed = Math.hypot(game.vel.x, game.vel.z)
     let bobOff = 0
     if (grounded.current && hSpeed > 0.4) {
+      game.walked += hSpeed * dt
       const stride = crouching ? 0.5 : running ? 1.6 : 0.78
       const amp = crouching ? 0.02 : 0.045
       const prev = stepPhase.current
@@ -134,11 +145,13 @@ export function Player() {
       if (Math.floor(stepPhase.current) !== Math.floor(prev)) footstep(running)
     }
 
-    camera.position.set(nx, ny + bobOff, nz)
+    camera.position.set(nx - game.origin.x, ny + bobOff, nz - game.origin.z)
     camera.rotation.order = 'YXZ'
     camera.rotation.set(game.pitch, game.yaw, 0)
 
-    if (lightRef.current) lightRef.current.position.set(nx, ny + 0.4, nz)
+    if (lightRef.current) {
+      lightRef.current.position.set(nx - game.origin.x, ny + 0.4, nz - game.origin.z)
+    }
   })
 
   return (
