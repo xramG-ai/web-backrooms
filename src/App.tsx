@@ -6,7 +6,7 @@ import { Player } from './components/Player'
 import { Effects } from './components/Effects'
 import { game } from './game/state'
 import { initAudio, setVolume, ringClick, unlockSound } from './game/audio'
-import { FOG_COLOR, FOG_DENSITY } from './game/config'
+import { FOG_COLOR, FOG_DENSITY, FOV } from './game/config'
 
 const INV_SLOTS = 8
 
@@ -70,6 +70,8 @@ export default function App() {
 
   const [manual, setManual] = useState(false)
   const [menuView, setMenuView] = useState<'main' | 'settings'>('main')
+  const menuViewRef = useRef<'main' | 'settings'>('main')
+  menuViewRef.current = menuView
 
   const [rings, setRings] = useState<number[]>(scrambledRings)
   const [solved, setSolved] = useState(false)
@@ -79,6 +81,7 @@ export default function App() {
   const [sens, setSens] = useState(1)
   const [dof, setDof] = useState(true)
   const [vol, setVol] = useState(1)
+  const [fovv, setFovv] = useState(FOV)
 
   useEffect(() => {
     const onChange = () => {
@@ -109,9 +112,17 @@ export default function App() {
           void lockAll()
         }
       }
-      if (e.code === 'Escape' && uiRef.current === 'inventory') {
-        setMenuView('main')
-        setUi('menu')
+      if (e.code === 'Escape') {
+        if (uiRef.current === 'inventory') {
+          setMenuView('main')
+          setUi('menu')
+        } else if (uiRef.current === 'menu') {
+          if (menuViewRef.current === 'settings') {
+            setMenuView('main') // 설정 → 뒤로
+          } else {
+            void lockAll()      // 메인 → 게임 재개
+          }
+        }
       }
     }
     window.addEventListener('keydown', onKey)
@@ -155,7 +166,8 @@ export default function App() {
   return (
     <>
       <Canvas
-        camera={{ fov: 75, near: 0.05, far: 80 }}
+        camera={{ fov: FOV, near: 0.05, far: 80 }}
+        dpr={[1, 1.5]}
         gl={{ antialias: true }}
         onCreated={({ gl, scene }) => {
           game.canvas = gl.domElement
@@ -198,6 +210,18 @@ export default function App() {
               </div>
             ) : (
               <>
+                <label className="man-row wide">
+                  <span>시야각</span>
+                  <input
+                    type="range" min={70} max={110} step={5} value={fovv}
+                    onChange={e => {
+                      const v = Number(e.target.value)
+                      setFovv(v)
+                      game.fov = v
+                    }}
+                  />
+                  <span className="val">{fovv}</span>
+                </label>
                 <label className="man-row wide">
                   <span>마우스 감도</span>
                   <input

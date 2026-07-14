@@ -52,6 +52,13 @@ export function Player() {
 
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, 0.05)
+
+    // FOV 설정 반영
+    const cam = camera as THREE.PerspectiveCamera
+    if (cam.fov !== game.fov) {
+      cam.fov = game.fov
+      cam.updateProjectionMatrix()
+    }
     const k = keys.current
     const locked = document.pointerLockElement === game.canvas
 

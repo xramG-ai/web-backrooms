@@ -10,4 +10,5 @@ export const game = {
   // 설정
   sensMult: 1,   // 마우스 감도 배율
   dof: true,     // 거리 블러 on/off
+  fov: 90,       // 시야각
 }

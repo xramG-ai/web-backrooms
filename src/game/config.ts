@@ -4,6 +4,10 @@ export const CELL = 4          // 청크 내부 그리드 셀 (m)
 export const WALL_H = 3.2      // 물리 층고 (m)
 export const WALL_T = 0.24     // 벽 두께 (m)
 export const LOAD_RADIUS = 2   // 로드 반경 (청크 수) → 5×5
+export const UNLOAD_RADIUS = 3 // 이 반경 밖에서만 해제 (히스테리시스 — 경계 왕복 히치 방지)
+
+// ── 카메라 ────────────────────────────────────
+export const FOV = 90          // 기본 시야각 (설정에서 70~110 조절)
 
 // ── 플레이어 ──────────────────────────────────
 export const EYE = 1.62        // 눈높이 (m)
