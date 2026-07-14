@@ -51,8 +51,9 @@ export function ChunkMesh({ cx, cz }: { cx: number; cz: number }) {
   const litGeo = useMemo(() => {
     if (data.lights.length === 0) return null
     const gs = data.lights.map(l => {
-      const g = new THREE.BoxGeometry(1.3, 0.07, 0.6)
-      g.translate(l.x, WALL_H - 0.035, l.z)
+      // 원형 매립 조명
+      const g = new THREE.CylinderGeometry(0.45, 0.45, 0.06, 20)
+      g.translate(l.x, WALL_H - 0.03, l.z)
       return g
     })
     const merged = mergeGeometries(gs)

@@ -20,7 +20,7 @@ export function Player() {
 
   useEffect(() => {
     const GAME_KEYS = new Set([
-      'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyC',
+      'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyC', 'KeyF',
       'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight',
     ])
     const down = (e: KeyboardEvent) => {

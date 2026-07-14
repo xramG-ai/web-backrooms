@@ -53,7 +53,7 @@ async function lockAll() {
     if (kb?.lock) {
       await kb.lock([
         'ControlLeft', 'ControlRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD',
-        'KeyC', 'Space', 'ShiftLeft', 'ShiftRight', 'Tab',
+        'KeyC', 'KeyF', 'Space', 'ShiftLeft', 'ShiftRight', 'Tab',
       ])
     }
   } catch {
@@ -319,6 +319,7 @@ export default function App() {
                   <div className="man-row"><span>달리기</span><span className="cap">SHIFT</span></div>
                   <div className="man-row"><span>점프</span><span className="cap">SPACE</span></div>
                   <div className="man-row"><span>앉기</span><span className="cap">CTRL / C</span></div>
+                  <div className="man-row"><span>줍기</span><span className="cap">F</span></div>
                   <div className="man-row"><span>소지품</span><span className="cap">TAB</span></div>
                   <div className="man-row"><span>일시 정지</span><span className="cap">ESC</span></div>
                 </div>

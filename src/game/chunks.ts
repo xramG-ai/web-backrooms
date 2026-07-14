@@ -115,16 +115,19 @@ function genChunk(cx: number, cz: number): ChunkData {
         w.z - w.sz / 2 < 14 && w.z + w.sz / 2 > 6))
   }
 
-  // 형광등: 격자 절반, 전부 켜짐 (M0 피드백 — 플리커/꺼짐은 이탈 구역용으로 보류)
+  // 형광등: 격자 절반, 전부 켜짐. 벽·기둥과 겹치는 자리는 설치하지 않음.
+  const LIGHT_R = 0.55
   const lights: LightSpot[] = []
   for (let gx = 0; gx < N; gx++) {
     for (let gz = 0; gz < N; gz++) {
       if ((gx + gz) % 2 !== 0) continue
-      lights.push({
-        x: ox + (gx + 0.5) * CELL,
-        z: oz + (gz + 0.5) * CELL,
-        state: 1,
-      })
+      const lx = ox + (gx + 0.5) * CELL
+      const lz = oz + (gz + 0.5) * CELL
+      const blocked = walls.some(w =>
+        lx > w.x - w.sx / 2 - LIGHT_R && lx < w.x + w.sx / 2 + LIGHT_R &&
+        lz > w.z - w.sz / 2 - LIGHT_R && lz < w.z + w.sz / 2 + LIGHT_R)
+      if (blocked) continue
+      lights.push({ x: lx, z: lz, state: 1 })
     }
   }
 
