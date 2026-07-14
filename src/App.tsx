@@ -51,12 +51,22 @@ export default function App() {
 
   const [manual, setManual] = useState(false)
 
-  // 크립텍스 링 상태 (10개, 무작위 시작 — 정답이면 다시 섞음)
+  // 크립텍스 링 상태: 10자 중 7자는 정답으로 맞춰져 있고, 무작위 3자리만 어긋나 있음
   const [rings, setRings] = useState<number[]>(() => {
-    let r: number[]
-    do {
-      r = Array.from({ length: ANSWER.length }, () => Math.floor(Math.random() * CHARS.length))
-    } while (r.map(n => CHARS[n]).join('') === ANSWER)
+    const target = ANSWER.split('').map(ch => CHARS.indexOf(ch))
+    const r = [...target]
+    const idxs = [...Array(ANSWER.length).keys()]
+    for (let i = idxs.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[idxs[i], idxs[j]] = [idxs[j], idxs[i]]
+    }
+    for (const i of idxs.slice(0, 3)) {
+      let v: number
+      do {
+        v = Math.floor(Math.random() * CHARS.length)
+      } while (v === target[i])
+      r[i] = v
+    }
     return r
   })
   const [solved, setSolved] = useState(false)
