@@ -5,10 +5,14 @@ import { World } from './components/World'
 import { Player } from './components/Player'
 import { Effects } from './components/Effects'
 import { game } from './game/state'
-import { initAudio, setVolume } from './game/audio'
+import { initAudio, setVolume, ringClick, unlockSound } from './game/audio'
 import { FOG_COLOR, FOG_DENSITY } from './game/config'
 
 const INV_SLOTS = 8
+
+// 크립텍스 자물쇠
+const CHARS = '-abcdefghijklmnopqrstuvwxyz' // 27자
+const ANSWER = '--backroom'                  // 10자 열쇠말
 
 /**
  * UI 상태 머신
@@ -46,6 +50,17 @@ export default function App() {
   const intent = useRef<'inventory' | null>(null)
 
   const [manual, setManual] = useState(false)
+
+  // 크립텍스 링 상태 (10개, 무작위 시작 — 정답이면 다시 섞음)
+  const [rings, setRings] = useState<number[]>(() => {
+    let r: number[]
+    do {
+      r = Array.from({ length: ANSWER.length }, () => Math.floor(Math.random() * CHARS.length))
+    } while (r.map(n => CHARS[n]).join('') === ANSWER)
+    return r
+  })
+  const [solved, setSolved] = useState(false)
+  const solvedRef = useRef(false)
 
   // 설정 값
   const [sens, setSens] = useState(1)
@@ -91,6 +106,23 @@ export default function App() {
   const enter = () => {
     initAudio()
     void lockAll()
+  }
+
+  /** 링 하나를 dir(±1)만큼 회전. 열쇠말이 맞으면 잠금 해제 후 진입 */
+  const spin = (i: number, dir: number) => {
+    if (solvedRef.current) return
+    ringClick()
+    setRings(prev => {
+      const next = [...prev]
+      next[i] = (next[i] + dir + CHARS.length) % CHARS.length
+      if (next.map(n => CHARS[n]).join('') === ANSWER) {
+        solvedRef.current = true
+        setSolved(true)
+        unlockSound()
+        setTimeout(() => enter(), 500)
+      }
+      return next
+    })
   }
 
   return (
@@ -175,16 +207,35 @@ export default function App() {
             <div className="rivet bl" />
             <div className="rivet br" />
             <div className="plate-title">WEB BACKROOMS</div>
-            <div className="cryptex">
-              <div className="cryptex-band">
-                NOCLIP&nbsp;·&nbsp;LEVEL&nbsp;0&nbsp;·&nbsp;NOCLIP&nbsp;·&nbsp;LEVEL&nbsp;0&nbsp;·&nbsp;NOCLIP&nbsp;·&nbsp;LEVEL&nbsp;0&nbsp;·&nbsp;NOCLIP&nbsp;·&nbsp;LEVEL&nbsp;0&nbsp;·&nbsp;
-              </div>
+            <div className={'rings' + (solved ? ' solved' : '')}>
+              {rings.map((v, i) => (
+                <div
+                  key={i}
+                  className="ring"
+                  onWheel={e => spin(i, e.deltaY > 0 ? 1 : -1)}
+                >
+                  <button className="ring-arrow" onClick={() => spin(i, -1)}>▲</button>
+                  <div className="ring-window">
+                    <div className="ring-letter dim">
+                      {CHARS[(v + CHARS.length - 1) % CHARS.length].toUpperCase()}
+                    </div>
+                    <div className="ring-letter cur" key={'c' + v}>
+                      {CHARS[v].toUpperCase()}
+                    </div>
+                    <div className="ring-letter dim">
+                      {CHARS[(v + 1) % CHARS.length].toUpperCase()}
+                    </div>
+                  </div>
+                  <button className="ring-arrow" onClick={() => spin(i, 1)}>▼</button>
+                </div>
+              ))}
+            </div>
+            <div className="plate-serial">
+              {solved ? '잠금 해제' : '열쇠말을 맞추면 문이 열린다'}
             </div>
             <div className="plate-buttons">
-              <button className="mbtn" onClick={enter}>게임 시작</button>
               <button className="mbtn" onClick={() => setManual(true)}>설명서</button>
             </div>
-            <div className="plate-serial">SPEC. 100 × 100 × 100</div>
           </div>
 
           {manual && (
@@ -204,6 +255,10 @@ export default function App() {
                   <div className="man-row"><span>설정</span><span className="cap">ESC</span></div>
                 </div>
                 <div className="man-note">
+                  장치의 링을 돌려 열쇠말을 맞추면 진입한다.<br />
+                  휠 또는 ▲▼로 링을 돌릴 수 있다.<br />
+                  힌트: 획 둘, 그리고 뒷방 — 한 단어로.<br />
+                  <br />
                   게임은 전체화면으로 실행된다.<br />
                   이 공간의 규칙은 문서화되어 있지 않다.<br />
                   걸어라. 기억하려 하지 마라.

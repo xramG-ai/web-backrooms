@@ -359,3 +359,90 @@ html, body, #root {
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.18);
   opacity: 0.9;
 }
+
+/* ── 크립텍스 링 자물쇠 ─────────────────────── */
+
+.rings {
+  display: flex;
+  gap: 7px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #1c1e21;
+  background: linear-gradient(180deg, #2b2d30, #3a3c40 50%, #232527);
+  box-shadow: inset 0 3px 9px rgba(0, 0, 0, 0.65), inset 0 -3px 9px rgba(0, 0, 0, 0.65);
+}
+
+.ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  user-select: none;
+}
+
+.ring-arrow {
+  width: 30px;
+  height: 17px;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid #26282b;
+  font-size: 8px;
+  line-height: 1;
+  color: #202225;
+  background: linear-gradient(180deg, #8a8c90, #5c5e62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 2px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+.ring-arrow:hover { filter: brightness(1.15); }
+.ring-arrow:active { transform: translateY(1px); }
+
+.ring-window {
+  display: flex;
+  flex-direction: column;
+  width: 32px;
+  border-radius: 5px;
+  border: 1px solid #191b1d;
+  overflow: hidden;
+  /* 원통 느낌: 좌우로 어두워지는 세로 실린더 */
+  background: linear-gradient(90deg, #26282b, #6f7175 22%, #96989c 50%, #606266 80%, #202225);
+  box-shadow: inset 0 6px 8px rgba(0, 0, 0, 0.55), inset 0 -6px 8px rgba(0, 0, 0, 0.55);
+}
+
+.ring-letter {
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  font-family: 'Courier New', monospace;
+  font-size: 15px;
+  font-weight: bold;
+  color: #1d1f21;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.ring-letter.dim {
+  opacity: 0.38;
+  transform: scale(0.82);
+}
+
+.ring-letter.cur {
+  background: rgba(255, 244, 200, 0.10);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  animation: ring-snap 90ms ease-out;
+}
+
+@keyframes ring-snap {
+  from { transform: scale(1.22); opacity: 0.4; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* 잠금 해제 시 열쇠말이 노랗게 배어남 */
+.rings.solved .ring-letter.cur {
+  color: #5c4c12;
+  text-shadow: 0 0 7px rgba(255, 222, 120, 0.75), 0 1px 0 rgba(255, 255, 255, 0.3);
+  animation: unlock-glow 0.5s ease-out;
+}
+
+@keyframes unlock-glow {
+  0% { text-shadow: 0 0 0 rgba(255, 222, 120, 0); }
+  100% { text-shadow: 0 0 7px rgba(255, 222, 120, 0.75); }
+}

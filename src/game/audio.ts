@@ -10,6 +10,58 @@ export function setVolume(v: number) {
   if (master) master.gain.value = 0.05 * v
 }
 
+/** 사용자 제스처 안에서 호출되면 컨텍스트를 늦게 생성해도 된다 */
+function ensureCtx(): AudioContext {
+  if (!ctx) ctx = new AudioContext()
+  if (ctx.state === 'suspended') void ctx.resume()
+  return ctx
+}
+
+/** 크립텍스 링 클릭음: 짧은 금속성 틱 */
+export function ringClick() {
+  if (volMult <= 0) return
+  const c = ensureCtx()
+  const t = c.currentTime
+  const src = c.createBufferSource()
+  const b = c.createBuffer(1, Math.ceil(c.sampleRate * 0.03), c.sampleRate)
+  const d = b.getChannelData(0)
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1
+  src.buffer = b
+  const bp = c.createBiquadFilter()
+  bp.type = 'bandpass'
+  bp.frequency.value = 2600 + Math.random() * 600
+  bp.Q.value = 6
+  const g = c.createGain()
+  g.gain.setValueAtTime(0.25 * volMult, t)
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.05)
+  src.connect(bp); bp.connect(g); g.connect(c.destination)
+  src.start(t)
+}
+
+/** 잠금 해제음: 낮은 철컥 + 금속 핑 */
+export function unlockSound() {
+  if (volMult <= 0) return
+  const c = ensureCtx()
+  const t = c.currentTime
+  const o = c.createOscillator()
+  o.type = 'sine'
+  o.frequency.setValueAtTime(140, t)
+  o.frequency.exponentialRampToValueAtTime(60, t + 0.25)
+  const g = c.createGain()
+  g.gain.setValueAtTime(0.4 * volMult, t)
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.3)
+  o.connect(g); g.connect(c.destination)
+  o.start(t); o.stop(t + 0.32)
+  const p = c.createOscillator()
+  p.type = 'triangle'
+  p.frequency.value = 1240
+  const pg = c.createGain()
+  pg.gain.setValueAtTime(0.12 * volMult, t + 0.05)
+  pg.gain.exponentialRampToValueAtTime(0.001, t + 0.5)
+  p.connect(pg); pg.connect(c.destination)
+  p.start(t + 0.05); p.stop(t + 0.55)
+}
+
 function noiseBuffer(dur: number): AudioBuffer {
   const b = ctx!.createBuffer(1, Math.ceil(ctx!.sampleRate * dur), ctx!.sampleRate)
   const d = b.getChannelData(0)
