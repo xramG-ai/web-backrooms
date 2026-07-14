@@ -446,3 +446,58 @@ html, body, #root {
   0% { text-shadow: 0 0 0 rgba(255, 222, 120, 0); }
   100% { text-shadow: 0 0 7px rgba(255, 222, 120, 0.75); }
 }
+
+/* ── 일시 정지 메뉴 (금속판) ─────────────────── */
+
+.plate.pause {
+  width: 300px;
+  gap: 20px;
+  padding: 36px 40px 30px;
+}
+
+.pause-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.pause-buttons .mbtn {
+  width: 100%;
+  min-width: 0;
+}
+
+.man-row.wide {
+  width: 100%;
+  cursor: pointer;
+}
+
+.man-row.wide input[type='range'] {
+  flex: 1;
+  accent-color: #3f4145;
+}
+
+.man-row.wide input[type='checkbox'] {
+  accent-color: #3f4145;
+  width: 16px;
+  height: 16px;
+}
+
+.man-row.wide .val {
+  width: 40px;
+  text-align: right;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+/* 잠금 해제 후 진입 버튼: 열쇠말과 같은 노란 빛 */
+.mbtn.glow {
+  color: #5c4c12;
+  text-shadow: 0 0 8px rgba(255, 222, 120, 0.8), 0 1px 0 rgba(255, 255, 255, 0.3);
+  animation: pulse-glow 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { text-shadow: 0 0 8px rgba(255, 222, 120, 0.8), 0 1px 0 rgba(255, 255, 255, 0.3); }
+  50% { text-shadow: 0 0 3px rgba(255, 222, 120, 0.35), 0 1px 0 rgba(255, 255, 255, 0.3); }
+}

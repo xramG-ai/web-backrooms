@@ -14,12 +14,31 @@ const INV_SLOTS = 8
 const CHARS = '-abcdefghijklmnopqrstuvwxyz' // 27자
 const ANSWER = '--backroom'                  // 10자 열쇠말
 
+/** 10자 중 7자는 정답, 무작위 3자리만 오답으로 어긋난 초기 배열 */
+function scrambledRings(): number[] {
+  const target = ANSWER.split('').map(ch => CHARS.indexOf(ch))
+  const r = [...target]
+  const idxs = [...Array(ANSWER.length).keys()]
+  for (let i = idxs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[idxs[i], idxs[j]] = [idxs[j], idxs[i]]
+  }
+  for (const i of idxs.slice(0, 3)) {
+    let v: number
+    do {
+      v = Math.floor(Math.random() * CHARS.length)
+    } while (v === target[i])
+    r[i] = v
+  }
+  return r
+}
+
 /**
  * UI 상태 머신
- * start     시작 화면 (첫 진입)
+ * start     시작 화면 (크립텍스)
  * playing   포인터 락 + 게임 중
  * inventory Tab → 포인터 락 해제, 커서 보임
- * menu      ESC → 설정 UI
+ * menu      ESC → 일시 정지 메뉴
  */
 type Ui = 'start' | 'playing' | 'inventory' | 'menu'
 
@@ -50,25 +69,9 @@ export default function App() {
   const intent = useRef<'inventory' | null>(null)
 
   const [manual, setManual] = useState(false)
+  const [menuView, setMenuView] = useState<'main' | 'settings'>('main')
 
-  // 크립텍스 링 상태: 10자 중 7자는 정답으로 맞춰져 있고, 무작위 3자리만 어긋나 있음
-  const [rings, setRings] = useState<number[]>(() => {
-    const target = ANSWER.split('').map(ch => CHARS.indexOf(ch))
-    const r = [...target]
-    const idxs = [...Array(ANSWER.length).keys()]
-    for (let i = idxs.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[idxs[i], idxs[j]] = [idxs[j], idxs[i]]
-    }
-    for (const i of idxs.slice(0, 3)) {
-      let v: number
-      do {
-        v = Math.floor(Math.random() * CHARS.length)
-      } while (v === target[i])
-      r[i] = v
-    }
-    return r
-  })
+  const [rings, setRings] = useState<number[]>(scrambledRings)
   const [solved, setSolved] = useState(false)
   const solvedRef = useRef(false)
 
@@ -84,7 +87,8 @@ export default function App() {
         intent.current = null
         setUi('playing')
       } else if (uiRef.current === 'playing') {
-        // Tab으로 의도한 해제면 인벤토리, ESC 등 그 외에는 설정 메뉴
+        // Tab으로 의도한 해제면 인벤토리, ESC 등 그 외에는 일시 정지 메뉴
+        setMenuView('main')
         setUi(intent.current === 'inventory' ? 'inventory' : 'menu')
         intent.current = null
       }
@@ -106,6 +110,7 @@ export default function App() {
         }
       }
       if (e.code === 'Escape' && uiRef.current === 'inventory') {
+        setMenuView('main')
         setUi('menu')
       }
     }
@@ -118,7 +123,17 @@ export default function App() {
     void lockAll()
   }
 
-  /** 링 하나를 dir(±1)만큼 회전. 열쇠말이 맞으면 잠금 해제 후 진입 */
+  /** 일시 정지 → 타이틀로. 자물쇠는 다시 잠긴다. */
+  const exitToTitle = () => {
+    solvedRef.current = false
+    setSolved(false)
+    setRings(scrambledRings())
+    setMenuView('main')
+    setUi('start')
+    if (document.fullscreenElement) void document.exitFullscreen()
+  }
+
+  /** 링 하나를 dir(±1)만큼 회전. 열쇠말이 맞으면 잠금 해제. */
   const spin = (i: number, dir: number) => {
     if (solvedRef.current) return
     ringClick()
@@ -129,6 +144,8 @@ export default function App() {
         solvedRef.current = true
         setSolved(true)
         unlockSound()
+        // 마지막 조작이 버튼 클릭이었다면 자동 진입이 되고,
+        // 휠이었다면 (제스처 미인정) 진입 버튼을 눌러야 한다.
         setTimeout(() => enter(), 500)
       }
       return next
@@ -167,44 +184,57 @@ export default function App() {
 
       {ui === 'menu' && (
         <div className="menu-backdrop">
-          <div className="menu">
-            <div className="inv-title">설정</div>
-            <label className="row">
-              <span>마우스 감도</span>
-              <input
-                type="range" min={0.4} max={2} step={0.1} value={sens}
-                onChange={e => {
-                  const v = Number(e.target.value)
-                  setSens(v)
-                  game.sensMult = v
-                }}
-              />
-              <span className="val">{sens.toFixed(1)}</span>
-            </label>
-            <label className="row">
-              <span>거리 블러</span>
-              <input
-                type="checkbox" checked={dof}
-                onChange={e => {
-                  setDof(e.target.checked)
-                  game.dof = e.target.checked
-                }}
-              />
-            </label>
-            <label className="row">
-              <span>소리</span>
-              <input
-                type="range" min={0} max={1} step={0.05} value={vol}
-                onChange={e => {
-                  const v = Number(e.target.value)
-                  setVol(v)
-                  setVolume(v)
-                }}
-              />
-              <span className="val">{Math.round(vol * 100)}%</span>
-            </label>
-            <button className="btn" onClick={() => void lockAll()}>계속하기</button>
-            <div className="inv-hint">TAB 소지품 · ESC 설정</div>
+          <div className="plate pause">
+            <div className="rivet tl" />
+            <div className="rivet tr" />
+            <div className="rivet bl" />
+            <div className="rivet br" />
+            <div className="plate-title small">일시 정지</div>
+            {menuView === 'main' ? (
+              <div className="pause-buttons">
+                <button className="mbtn" onClick={() => void lockAll()}>계속하기</button>
+                <button className="mbtn" onClick={() => setMenuView('settings')}>설정</button>
+                <button className="mbtn" onClick={exitToTitle}>메뉴로 나가기</button>
+              </div>
+            ) : (
+              <>
+                <label className="man-row wide">
+                  <span>마우스 감도</span>
+                  <input
+                    type="range" min={0.4} max={2} step={0.1} value={sens}
+                    onChange={e => {
+                      const v = Number(e.target.value)
+                      setSens(v)
+                      game.sensMult = v
+                    }}
+                  />
+                  <span className="val">{sens.toFixed(1)}</span>
+                </label>
+                <label className="man-row wide">
+                  <span>거리 블러</span>
+                  <input
+                    type="checkbox" checked={dof}
+                    onChange={e => {
+                      setDof(e.target.checked)
+                      game.dof = e.target.checked
+                    }}
+                  />
+                </label>
+                <label className="man-row wide">
+                  <span>소리</span>
+                  <input
+                    type="range" min={0} max={1} step={0.05} value={vol}
+                    onChange={e => {
+                      const v = Number(e.target.value)
+                      setVol(v)
+                      setVolume(v)
+                    }}
+                  />
+                  <span className="val">{Math.round(vol * 100)}%</span>
+                </label>
+                <button className="mbtn" onClick={() => setMenuView('main')}>뒤로</button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -244,7 +274,11 @@ export default function App() {
               {solved ? '잠금 해제' : '열쇠말을 맞추면 문이 열린다'}
             </div>
             <div className="plate-buttons">
-              <button className="mbtn" onClick={() => setManual(true)}>설명서</button>
+              {solved ? (
+                <button className="mbtn glow" onClick={enter}>진 입</button>
+              ) : (
+                <button className="mbtn" onClick={() => setManual(true)}>설명서</button>
+              )}
             </div>
           </div>
 
@@ -262,7 +296,7 @@ export default function App() {
                   <div className="man-row"><span>점프</span><span className="cap">SPACE</span></div>
                   <div className="man-row"><span>앉기</span><span className="cap">CTRL / C</span></div>
                   <div className="man-row"><span>소지품</span><span className="cap">TAB</span></div>
-                  <div className="man-row"><span>설정</span><span className="cap">ESC</span></div>
+                  <div className="man-row"><span>일시 정지</span><span className="cap">ESC</span></div>
                 </div>
                 <div className="man-note">
                   장치의 링을 돌려 열쇠말을 맞추면 진입한다.<br />
